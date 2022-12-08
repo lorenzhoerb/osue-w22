@@ -11,6 +11,12 @@ int is_hex_str(const char *str) {
     return 0;
 }
 
+int mult_hex_chars(char a, char b) {
+    int ia = hex_char_to_int(a);
+    int ib = hex_char_to_int(b);
+    return ia * ib;
+}
+
 int equalize_zeros(char **a, char **b) {
     size_t len_a = strlen(*a);
     size_t len_b = strlen(*b);
@@ -23,7 +29,6 @@ int equalize_zeros(char **a, char **b) {
     if (fill_zero(leading_a, a) == -1 || fill_zero(leading_b, b) == -1) {
         return -1;
     }
-
     return 0;
 }
 
@@ -39,4 +44,14 @@ int fill_zero(uint8_t zeros, char **str) {
     memset(*str, '0', zeros);
     strcat(*str, tmp_str);
     return 0;
+}
+
+int hex_char_to_int(char character) {
+    if (character >= '0' && character <= '9')
+        return character - '0';
+    if (character >= 'A' && character <= 'F')
+        return character - 'A' + 10;
+    if (character >= 'a' && character <= 'f')
+        return character - 'a' + 10;
+    return -1;
 }

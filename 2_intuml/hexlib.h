@@ -22,4 +22,15 @@ int fill_zero(uint8_t zeros, char **str);
 
 int equalize_zeros(char **a, char **b);
 
+/**
+ * @brief Parses a hex-char to a int
+ * valid input chars [0-9a-zA-Z]
+ *
+ * @param character hex-char
+ * @return int, hex-char as int. Returns -1 if the the char couldn't be parsed
+ */
+int hex_char_to_int(char character);
+
+int mult_hex_chars(char a, char b);
+
 #endif
