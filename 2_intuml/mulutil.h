@@ -1,5 +1,16 @@
-#ifndef UMLUTIL
-#define UMLUTIL
+/**
+ * @file intmul.h
+ * @author Lorenz Hörburger 12024737
+ * @brief Takes hex strings from stdin and multiplies them.
+ *
+ * @version 0.1
+ * @date 2022-09-12
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+#ifndef MULUTIL
+#define MULUTIL
 
 #include <stdlib.h>
 

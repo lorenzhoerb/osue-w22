@@ -1,3 +1,14 @@
+/**
+ * @file hexlib.h
+ * @author Lorenz Hörburger 12024737
+ * @brief Hex libarary for working with hex strings.
+ *
+ * @version 0.1
+ * @date 2022-09-12
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef HEXLIB
 #define HEXLIB
 
@@ -20,6 +31,15 @@ int is_hex_str(const char* str);
  */
 int fill_zero(uint8_t zeros, char** str);
 
+/**
+ * @brief Equalizes two strings so that they have the same length.
+ * The length must be a power of 2. If these conditions are not fullfilled
+ * the strings a filled with leading zeros.
+ *
+ * @param a allocated string a
+ * @param b allocated string b
+ * @return int 0 on success -1 when an error occurred
+ */
 int equalize_zeros(char** a, char** b);
 
 /**
@@ -31,8 +51,12 @@ int equalize_zeros(char** a, char** b);
  */
 int hex_char_to_int(char character);
 
-int mult_hex_chars(char a, char b);
-
+/**
+ * @brief Set leading zeros so that the length of a is a power of 2.
+ *
+ * @param a allocated string a
+ * @return int 0 on success -1 on failure
+ */
 int set_leading_zeros(char** a);
 
 /**
@@ -45,14 +69,23 @@ int set_leading_zeros(char** a);
 char int_to_hex_char(int i);
 
 /**
- * @brief
+ * @brief Multiplies two hex chars.
  *
- * @param a hex character
- * @param b hex character
- * @return char
+ * @param a hex char a
+ * @param b hex char b
+ * @return int product of multiplication in dezimal
  */
-char add_hex(char a, char b, char* overflow);
+int mult_hex_chars(char a, char b);
 
+/**
+ * @brief Addition on two hex chars and returns the result.
+ * The result gets allocated and must be freed.
+ *
+ * @param a hex string a
+ * @param b hex string b
+ * @param offset Offsets b to the left by offset digits
+ * @return char* allocated result
+ */
 char* add_hex_str(char* a, char* b, int offset);
 
 #endif

@@ -1,13 +1,18 @@
+/**
+ * @file intmul.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Takes hex strings from stdin and multiplies them.
+ *
+ * @version 0.1
+ * @date 2022-09-12
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include "hexlib.h"
-#include "umlutil.h"
-#include <stdarg.h>
+#include "mulutil.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 char* a = NULL;
 char* b = NULL;
@@ -54,16 +59,13 @@ void mult_hex(char** result, char* hex_a, char* hex_b)
     read_results(hex_len * 2 + 1, sub_results, pipes, pids);
 
     char* r1 = add_hex_str(sub_results[3], sub_results[0], hex_len);
-    // printf("%s = %s, %s\n", r1, sub_results[3], sub_results[0]);
-
     char* r2 = add_hex_str(r1, sub_results[2], hex_len / 2);
-    // printf("%s = %s, %s\n", r2, r1, sub_results[2]);
-
     char* r3 = add_hex_str(r2, sub_results[1], hex_len / 2);
-    // printf("%s = %s, %s\n", r3, r2, sub_results[1]);
 
     // sets leading zeros to power of 2
-    // set_leading_zeros(&r3);
+    // remove_zeros(r3);
+    set_leading_zeros(&r3);
+
     printf("%s\n", r3);
     free(r1);
     free(r2);
@@ -71,6 +73,13 @@ void mult_hex(char** result, char* hex_a, char* hex_b)
     close_sub_hex(subhex);
 }
 
+/**
+ * @brief Checks if a string is a valid hex string and allocates memory for it.
+ *
+ * @param line line
+ * @param read length of read line
+ * @return char* allocated hex string
+ */
 char* parse_hex_line(char* line, ssize_t read)
 {
     if (line[read - 1] == '\n') {
@@ -86,11 +95,20 @@ char* parse_hex_line(char* line, ssize_t read)
     char* hex = (char*)malloc(sizeof(char) * strlen(line) + 1);
     if (hex == NULL) {
         log_error("Error while malloc");
+        free(line);
+        exit(EXIT_FAILURE);
     }
     strcpy(hex, line);
     return hex;
 }
 
+/**
+ * @brief Parses first two line of stdin to hexvalus and sets them to the global
+ * variables a and b.
+ *
+ * @param argc arg count
+ * @param argv  argv verctor
+ */
 void parse_input(int argc, char** argv)
 {
     char* line = NULL;
@@ -116,15 +134,22 @@ void parse_input(int argc, char** argv)
     }
     a = tmp_a;
     b = tmp_b;
+    free(line);
 }
 
+/**
+ * @brief Main starting point of the program
+ *
+ * @param argc arg count
+ * @param argv arg vector
+ * @return int exit status
+ */
 int main(int argc, char** argv)
 {
     prg_name = argv[0];
     char* result = NULL;
 
     parse_input(argc, argv);
-    fprintf(stderr, "waiting \n");
     mult_hex(&result, a, b);
 
     free(a);

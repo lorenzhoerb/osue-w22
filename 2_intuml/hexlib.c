@@ -1,3 +1,14 @@
+/**
+ * @file hexlib.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Hex libarary for working with hex strings.
+ *
+ * @version 0.1
+ * @date 2022-09-12
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include "hexlib.h"
 #include <math.h>
 #include <stdint.h>
@@ -81,18 +92,6 @@ char int_to_hex_char(int i)
         return '0' + i;
     else
         return 'a' + i - 10;
-}
-
-char add_hex(char a, char b, char* overflow)
-{
-    int int_a = hex_char_to_int(a);
-    int int_b = hex_char_to_int(b);
-
-    int result = (int_a + int_b) % 16;
-    int int_overflow = (int_a + int_b) / 16;
-
-    *overflow = int_to_hex_char(int_overflow);
-    return int_to_hex_char(result);
 }
 
 char* add_hex_str(char* a, char* b, int offset)

@@ -1,11 +1,33 @@
-#include "umlutil.h"
+/**
+ * @file multutil.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Util functionalities for intmul
+ *
+ * @version 0.1
+ * @date 2022-09-12
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+#include "mulutil.h"
 #include "stdio.h"
 #include <errno.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+/**
+ * @brief Inits all sub hex values: ah, al, bh, bl
+ * and safes it into the struct SubHex. Memory gets allocated
+ * and subHex should be freed with close_sub_hex;
+ *
+ * @param hex_a hex string a
+ * @param hex_b hex string b
+ * @return struct SubHex*
+ */
 struct SubHex* init_sub_hex(char* hex_a, char* hex_b)
 {
     struct SubHex* subhex = malloc(sizeof(struct SubHex));
@@ -36,6 +58,11 @@ struct SubHex* init_sub_hex(char* hex_a, char* hex_b)
     return subhex;
 }
 
+/**
+ * @brief Frees all allocated memory in subhex
+ *
+ * @param subhex
+ */
 void close_sub_hex(struct SubHex* subhex)
 {
     free(subhex->ah);
@@ -45,6 +72,14 @@ void close_sub_hex(struct SubHex* subhex)
     free(subhex);
 }
 
+/**
+ * @brief Writes an argument to the child via pipes.
+ *
+ * @param pipes pipes
+ * @param pipe_index pipe index
+ * @param arg1 hex string
+ * @param arg2 hex string
+ */
 void write_arguments(int pipes[4][2][2], int pipe_index, const char* arg1,
     const char* arg2)
 {
@@ -58,6 +93,12 @@ void write_arguments(int pipes[4][2][2], int pipe_index, const char* arg1,
     }
 }
 
+/**
+ * @brief Writes the SubHex to child pipes.
+ *
+ * @param pipes pipes
+ * @param subhex SubHex struct
+ */
 void write_subhex(int pipes[4][2][2], struct SubHex* subhex)
 {
     write_arguments(pipes, 0, subhex->ah, subhex->bh);
@@ -66,12 +107,21 @@ void write_subhex(int pipes[4][2][2], struct SubHex* subhex)
     write_arguments(pipes, 3, subhex->al, subhex->bl);
 }
 
+/**
+ * @brief Waits for the child proccesses to terminate and reads the results into result.
+ * [0]: ah*bh, [1]: ah*bl, [2]: al*bh, [3]: al*bl
+ *
+ * @param res_size Size of the buffter where the result should be saved
+ * @param result Result
+ * @param pipes pupes
+ * @param pids Process ids of child processes
+ */
 void read_results(int res_size, char result[4][res_size], int pipes[4][2][2], int pids[4])
 {
     int status;
     int i;
     for (i = 0; i < 4; i++) {
-        pid_t cpid = waitpid(pids[i], &status, 0);
+        waitpid(pids[i], &status, 0);
         if (WEXITSTATUS(status) == EXIT_FAILURE) {
             fprintf(stderr, "error exit because child");
             exit(EXIT_FAILURE);
@@ -85,6 +135,13 @@ void read_results(int res_size, char result[4][res_size], int pipes[4][2][2], in
     }
 }
 
+/**
+ * @brief Set the up pipes and closes all unneeded pipes.
+ *
+ * @param pid process id
+ * @param parent_index index of parent. Also identifier for pipe
+ * @param pipes inited pipes
+ */
 void setup_pipes(pid_t pid, int parent_index, int pipes[4][2][2])
 {
     // pipes[part][direction: 0 write arguments 1 get solution][pipe]
@@ -111,6 +168,11 @@ void setup_pipes(pid_t pid, int parent_index, int pipes[4][2][2])
     }
 }
 
+/**
+ * @brief Inits all pipes.
+ *
+ * @param pipes pipes
+ */
 void init_pipes(int pipes[4][2][2])
 {
     int i;
@@ -125,6 +187,12 @@ void init_pipes(int pipes[4][2][2])
     }
 }
 
+/**
+ * @brief Set the up children. And inits pids.
+ *
+ * @param pipes inited pipes
+ * @param pids pids
+ */
 void setup_children(int pipes[4][2][2], int pids[4])
 {
     init_pipes(pipes);
@@ -141,14 +209,23 @@ void setup_children(int pipes[4][2][2], int pids[4])
             log_error("execlp failed. this should never be reached");
         }
         if (pid == -1) {
-            log_error("pid error %s", strerror(errno));
+            int j = 0;
+            for (j = 0; j < i; j++) {
+                kill(pids[i], SIGKILL);
+            }
+            log_error("pid error: %s", strerror(errno));
             exit(EXIT_FAILURE);
-            // ToDo Error exit
         }
         pids[i] = pid;
     }
 }
 
+/**
+ * @brief Logs an error to stderr with custom format.
+ *
+ * @param format printf format
+ * @param ... params for printf
+ */
 void log_error(const char* format, ...)
 {
     va_list args;
