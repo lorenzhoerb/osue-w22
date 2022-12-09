@@ -8,7 +8,7 @@
 CC = gcc
 DEFS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L -g
 CFLAGS = -std=c99 -pedantic -Wall $(DEFS)
-OBJECTS = intuml.o hexlib.o
+OBJECTS = intuml.o hexlib.o umlutil.o
 
 all: intuml
 
@@ -17,6 +17,10 @@ intuml: $(OBJECTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+intuml.o: intuml.c hexlib.o umlutil.h
+hexlib.o: hexlib.c hexlib.h
+umlutil.o: umlutil.c umlutil.h
 
 clean: 
 	rm -rf *.o intuml
