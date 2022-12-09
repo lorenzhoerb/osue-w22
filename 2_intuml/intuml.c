@@ -51,7 +51,7 @@ void mult_hex(char** result, char* hex_a, char* hex_b)
     // read results from children
     // [0]: ah*bh, [1]: ah*bl, [2]: al*bh, [3]: al*bl
     char sub_results[4][hex_len * 2 + 1];
-    read_results(hex_len * 2 + 1, sub_results, pipes);
+    read_results(hex_len * 2 + 1, sub_results, pipes, pids);
 
     char* r1 = add_hex_str(sub_results[3], sub_results[0], hex_len);
     // printf("%s = %s, %s\n", r1, sub_results[3], sub_results[0]);
@@ -62,6 +62,8 @@ void mult_hex(char** result, char* hex_a, char* hex_b)
     char* r3 = add_hex_str(r2, sub_results[1], hex_len / 2);
     // printf("%s = %s, %s\n", r3, r2, sub_results[1]);
 
+    // sets leading zeros to power of 2
+    // set_leading_zeros(&r3);
     printf("%s\n", r3);
     free(r1);
     free(r2);
@@ -122,6 +124,7 @@ int main(int argc, char** argv)
     char* result = NULL;
 
     parse_input(argc, argv);
+    fprintf(stderr, "waiting \n");
     mult_hex(&result, a, b);
 
     free(a);

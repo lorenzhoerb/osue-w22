@@ -1,5 +1,6 @@
 #include "hexlib.h"
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,19 @@ int mult_hex_chars(char a, char b)
     int ia = hex_char_to_int(a);
     int ib = hex_char_to_int(b);
     return ia * ib;
+}
+
+int set_leading_zeros(char** a)
+{
+    size_t len = strlen(*a);
+    double power = ceil(log2(len));
+    size_t eq_len = pow(2, power);
+    size_t leading = eq_len - len;
+
+    if (fill_zero(leading, a) == -1) {
+        return -1;
+    }
+    return 0;
 }
 
 int equalize_zeros(char** a, char** b)

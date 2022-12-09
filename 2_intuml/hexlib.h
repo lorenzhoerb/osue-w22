@@ -33,6 +33,8 @@ int hex_char_to_int(char character);
 
 int mult_hex_chars(char a, char b);
 
+int set_leading_zeros(char** a);
+
 /**
  * @brief parses a int to a hex-char
  *

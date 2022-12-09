@@ -46,7 +46,7 @@ void init_pipes(int pipes[4][2][2]);
 
 void setup_children(int pipes[4][2][2], int pids[4]);
 
-void read_results(int res_size, char result[4][res_size], int pipes[4][2][2]);
+void read_results(int res_size, char result[4][res_size], int pipes[4][2][2], int pids[4]);
 
 /**
  * @brief Logs the error message specified in format to stderr.

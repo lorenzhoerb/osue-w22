@@ -10,9 +10,9 @@ DEFS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L 
 CFLAGS = -std=c99 -pedantic -Wall $(DEFS)
 OBJECTS = intuml.o hexlib.o umlutil.o
 
-all: intuml
+all: intmul
 
-intuml: $(OBJECTS)
+intmul: $(OBJECTS)
 	$(CC) -o $@ $^ $(LFLAGS)
 
 %.o: %.c
@@ -23,4 +23,4 @@ hexlib.o: hexlib.c hexlib.h
 umlutil.o: umlutil.c umlutil.h
 
 clean: 
-	rm -rf *.o intuml
+	rm -rf *.o intmul
