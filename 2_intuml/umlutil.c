@@ -1,5 +1,6 @@
 #include "umlutil.h"
 #include "stdio.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
@@ -69,8 +70,9 @@ void read_results(int res_size, char result[4][res_size], int pipes[4][2][2])
     wait(NULL);
     wait(NULL);
     wait(NULL);
-    int i;
+
     ssize_t s = 0;
+    int i;
     for (i = 0; i < 4; i++) {
         s = read(pipes[i][1][0], result[i], res_size);
         result[i][s - 1] = '\0';
@@ -127,7 +129,7 @@ void setup_children(int pipes[4][2][2], int pids[4])
             log_error("execlp failed. this should never be reached");
         }
         if (pid == -1) {
-            log_error("pid error");
+            log_error("pid error %s", strerror(errno));
             // ToDo Error exit
         }
         pids[i] = pid;
