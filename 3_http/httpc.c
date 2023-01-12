@@ -57,8 +57,15 @@ int httpc(const char* method, const char* url, const char* port, FILE* output)
     size_t size = 0;
     ssize_t read;
 
+    int body = 0;
     while ((read = getline(&line, &size, sockfile)) != -1) {
-        fprintf(output, "%s", line);
+        if (strcmp(line, "\r\n") == 0) {
+            body = 1;
+            continue;
+        }
+        if (body) {
+            fprintf(output, "%s", line);
+        }
     }
 
     if (line != NULL) {
