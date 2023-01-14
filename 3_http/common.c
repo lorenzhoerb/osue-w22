@@ -49,6 +49,22 @@ int is_url_valid(const char* url)
     return 1;
 }
 
+char* status_str(unsigned int status)
+{
+    switch (status) {
+    case 200:
+        return "OK";
+    case 400:
+        return "Bad Request";
+    case 404:
+        return "Not Found";
+    case 501:
+        return "Not implemented";
+    default:
+        return NULL;
+    }
+}
+
 /**
  * @brief Logs the error message specified in format to stderr.
  * prg_name needs to be set before calling this methode

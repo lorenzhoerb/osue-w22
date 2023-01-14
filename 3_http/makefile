@@ -12,7 +12,7 @@ OBJECTS = server.o client.o
 
 all: server client
 
-server: server.o common.o
+server: server.o common.o https.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 client: client.o common.o httpc.o
@@ -25,6 +25,7 @@ client.o: client.c common.h
 server.o: server.c common.h
 common.o: common.h
 httpc.o: common.h httpc.h
+https.o: common.h https.h
 
 clean: 
 	rm -rf *.o server client

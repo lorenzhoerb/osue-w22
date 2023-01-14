@@ -8,6 +8,7 @@ char* file_from_url(const char* url);
 int is_url_valid(const char* url);
 char* file_path_from_url(const char* url);
 void host_from_url(const char* url, char* host);
+char* status_str(unsigned int status);
 
 void log_error(const char* format, ...);
 
