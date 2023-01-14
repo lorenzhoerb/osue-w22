@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#define PROTOCOL "HTTP/1.1\r\n"
+#define PROTOCOL "HTTP/1.1"
 
 struct options {
     char* port;
@@ -19,7 +19,14 @@ struct req {
     char* method;
 };
 
+struct res {
+    unsigned int status;
+    FILE* body;
+};
+
 struct options* g_opts;
+struct req* parse_req(FILE* client);
+void send_response(FILE* clientfile, struct res* res);
 
 void clean_exit(int exit_status);
 
@@ -27,6 +34,22 @@ void usage(void)
 {
     (void)fprintf(stderr, "Usage: %s [-p PORT] [-i INDEX] DOC_ROOT\n",
         prg_name);
+}
+
+char* status_str(unsigned int status)
+{
+    switch (status) {
+    case 200:
+        return "OK";
+    case 400:
+        return "Bad Request";
+    case 404:
+        return "Not Found";
+    case 501:
+        return "Not implemented";
+    default:
+        return NULL;
+    }
 }
 
 struct options init_options(int argc, char** argv)
@@ -102,7 +125,7 @@ int create_server(char* port)
     return sockfd;
 }
 
-void server_listen(int sockfd, int queue, void (*handle)(FILE*))
+void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res*))
 {
     if (listen(sockfd, queue) < 0) {
         log_error("listen failed");
@@ -120,9 +143,37 @@ void server_listen(int sockfd, int queue, void (*handle)(FILE*))
             log_error("Httpc open sockfile failed");
         }
 
-        (*handle)(clientfile);
-        fclose(clientfile);
+        struct req* req = parse_req(clientfile);
+        struct res res = { .status = 200, .body = NULL };
+
+        if (req != NULL) {
+            (*handle)(req, &res);
+        }
+
+        send_response(clientfile, &res);
+
+        if (clientfile != NULL) {
+            fclose(clientfile);
+        }
+        if (res.body != NULL) {
+            fclose(res.body);
+        }
     }
+}
+
+void send_response(FILE* clientfile, struct res* res)
+{
+    fprintf(clientfile, "%s %d %s\r\n\r\n", PROTOCOL, res->status, status_str(res->status));
+    if (res->body != NULL) {
+        char* line = NULL;
+        size_t size = 0;
+        ssize_t read;
+        while ((read = getline(&line, &size, res->body)) != -1) {
+            fprintf(clientfile, "%s", line);
+            fflush(clientfile);
+        }
+    }
+    fflush(clientfile);
 }
 
 int parse_req_line(char* line, struct req* req)
@@ -138,7 +189,7 @@ int parse_req_line(char* line, struct req* req)
             req->path = token;
         } else if (i == 2) {
             // Protocol
-            if (strcmp(token, PROTOCOL) != 0) {
+            if (strcmp(token, "HTTP/1.1\r\n") != 0) {
                 return -1;
             }
         }
@@ -171,7 +222,7 @@ struct req* parse_req(FILE* client)
             }
             firstline = 0;
         } else if (strcmp(line, "\r\n") != 0) {
-            // header
+            // ToDo: parse header
             continue;
         } else {
             break;
@@ -181,14 +232,15 @@ struct req* parse_req(FILE* client)
     return req;
 }
 
-void handler(FILE* client)
+void handler(struct req* req, struct res* res)
 {
-    struct req* req = parse_req(client);
-    if (req == NULL) {
-        printf("PROTOCOL ERROR\n");
-        return;
-    }
     printf("Req: %s, %s\n", req->path, req->method);
+    FILE* body = fopen("test.html", "r");
+    if (body == NULL) {
+        log_error("opening body failed");
+    } else {
+        res->body = body;
+    }
 }
 
 void clean_exit(int exit_status)
