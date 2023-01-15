@@ -35,11 +35,14 @@ int create_server(char* port)
         log_error("bind failed");
     }
 
+    // Server Log
+    printf("Server is running on port %s...\n", port);
+
     freeaddrinfo(ai);
     return sockfd;
 }
 
-void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res*))
+void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res*), struct settings* settings)
 {
     if (listen(sockfd, queue) < 0) {
         log_error("listen failed");
@@ -58,9 +61,12 @@ void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res
         }
 
         struct req* req = parse_req(clientfile);
-        struct res res = { .status = 200, .body = NULL };
+        struct res res = { .status = 400, .body = NULL };
 
         if (req != NULL) {
+            // Server Log
+            printf("%s %s\n", req->method, req->path);
+            req->settings = settings;
             (*handle)(req, &res);
         }
 
@@ -77,8 +83,25 @@ void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res
 
 void send_response(FILE* clientfile, struct res* res)
 {
-    fprintf(clientfile, "%s %d %s\r\n\r\n", PROTOCOL, res->status, status_str(res->status));
+    char date[100];
+    get_rfc822_date(date);
+    fprintf(clientfile, "%s %d %s\r\n", PROTOCOL, res->status, status_str(res->status));
+    if (res->status >= 200 && res->status < 300) {
+        fprintf(clientfile, "Date: %s\r\n", date);
+    }
+
     if (res->body != NULL) {
+        int content_length = file_size(res->body);
+        fprintf(clientfile, "Content-Length: %d\r\n", content_length);
+    }
+
+    fprintf(clientfile, "Connection: close\r\n");
+
+    // End header
+    fprintf(clientfile, "\r\n");
+
+    if (res->body != NULL) {
+
         char* line = NULL;
         size_t size = 0;
         ssize_t read;

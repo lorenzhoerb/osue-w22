@@ -1,3 +1,5 @@
 client
 server
 *.html
+*.txt
+*tar.gz

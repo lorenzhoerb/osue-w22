@@ -74,12 +74,16 @@ void clean_exit(int exit_status)
 
 void handler(struct req* req, struct res* res)
 {
-    printf("Req: %s, %s\n", req->path, req->method);
-    FILE* body = fopen("index.html", "r");
-    if (body == NULL) {
-        log_error("opening body failed");
+    if (strcmp(req->method, "GET") == 0) {
+        char* reqfilepath = resolve_path(req->settings->docRoot, req->path, req->settings->index);
+        if ((res->body = fopen(reqfilepath, "r")) == NULL) {
+            res->status = 404;
+        } else {
+            free(reqfilepath);
+            res->status = 200;
+        }
     } else {
-        res->body = body;
+        res->status = 501;
     }
 }
 
@@ -87,8 +91,14 @@ int main(int argc, char** argv)
 {
     prg_name = argv[0];
     struct options opts = init_options(argc, argv);
+    g_opts = &opts;
+
+    struct settings settings;
+    settings.docRoot = opts.docRoot;
+    settings.index = opts.index;
+
     int sockfd = create_server(opts.port);
-    server_listen(sockfd, 1, handler);
+    server_listen(sockfd, 1, handler, &settings);
 
     return 0;
 }

@@ -87,6 +87,7 @@ struct options init_options(int argc, char** argv)
     // validate URL
     if (!is_url_valid(opts.url)) {
         log_error("Invalid url: %s.", opts.url);
+        clean_exit(EXIT_FAILURE);
     }
 
     if (opt_o) {
@@ -111,6 +112,7 @@ FILE* open_out_file(const char* file)
     FILE* out = fopen(file, "w");
     if (out == NULL) {
         log_error("Error creating output file %s", file);
+        clean_exit(EXIT_FAILURE);
     }
     return out;
 }
@@ -130,6 +132,11 @@ int main(int argc, char** argv)
     prg_name = argv[0];
     struct options opts = init_options(argc, argv);
     g_opts = &opts;
-    httpc("GET", opts.url, opts.port, opts.out);
+    if (httpc("GET", opts.url, opts.port, opts.out) < 0) {
+        log_error("HTTPC failed");
+        clean_exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
     return 0;
 }
