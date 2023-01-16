@@ -1,12 +1,34 @@
+/**
+ * @file https.c
+ * @author Lorenz Hörburger 12024737
+ * @brief HTTP Server API
+ *
+ * @version 0.1
+ * @date 15.01.2023
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "https.h"
 #include "common.h"
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 #define PROTOCOL "HTTP/1.1"
+
+volatile sig_atomic_t server_quit = 0;
+char *gdup = NULL;
+
+
+void server_shutdown(void)
+{
+    server_quit = 1;
+}
 
 int create_server(char* port)
 {
@@ -20,12 +42,14 @@ int create_server(char* port)
 
     if (res != 0) {
         log_error("Getaddrinfo failed");
+        exit(EXIT_FAILURE);
     }
 
     int sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
     if (sockfd < 0) {
         log_error("Socket failed");
+        exit(EXIT_FAILURE);
     }
 
     int optval = 1;
@@ -33,10 +57,8 @@ int create_server(char* port)
 
     if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
         log_error("bind failed");
+        exit(EXIT_FAILURE);
     }
-
-    // Server Log
-    printf("Server is running on port %s...\n", port);
 
     freeaddrinfo(ai);
     return sockfd;
@@ -46,13 +68,13 @@ void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res
 {
     if (listen(sockfd, queue) < 0) {
         log_error("listen failed");
+        exit(EXIT_FAILURE);
     }
 
-    while (1) {
+    while (!server_quit) {
         int clientfd = accept(sockfd, NULL, NULL);
-
         if (clientfd < 0) {
-            log_error("accept failed");
+            break;
         }
 
         FILE* clientfile = fdopen(clientfd, "r+");
@@ -65,7 +87,6 @@ void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res
 
         if (req != NULL) {
             // Server Log
-            printf("%s %s\n", req->method, req->path);
             req->settings = settings;
             (*handle)(req, &res);
         }
@@ -79,13 +100,18 @@ void server_listen(int sockfd, int queue, void (*handle)(struct req*, struct res
             fclose(res.body);
         }
     }
+    free(gdup);
+    close(sockfd);
 }
 
 void send_response(FILE* clientfile, struct res* res)
 {
     char date[100];
     get_rfc822_date(date);
+
+    //Response line
     fprintf(clientfile, "%s %d %s\r\n", PROTOCOL, res->status, status_str(res->status));
+
     if (res->status >= 200 && res->status < 300) {
         fprintf(clientfile, "Date: %s\r\n", date);
     }
@@ -97,17 +123,14 @@ void send_response(FILE* clientfile, struct res* res)
 
     fprintf(clientfile, "Connection: close\r\n");
 
-    // End header
-    fprintf(clientfile, "\r\n");
-
     if (res->body != NULL) {
-
+        // End header / Begin Body
+        fprintf(clientfile, "\r\n");
         char* line = NULL;
         size_t size = 0;
         ssize_t read;
         while ((read = getline(&line, &size, res->body)) != -1) {
             fprintf(clientfile, "%s", line);
-            fflush(clientfile);
         }
     }
     fflush(clientfile);
@@ -151,13 +174,25 @@ struct req* parse_req(FILE* client)
     size_t size = 0;
     ssize_t read;
     int firstline = 1;
-    while ((read = getline(&line, &size, client)) != -1) {
+    while (1) {
+        read = getline(&line, &size, client);
+        if (read == -1 && errno != EINTR) {
+            break;
+        }
+        if (read == -1 && errno == EINTR) {
+            errno = 0;
+            continue;
+        }
+
         if (firstline) {
             dup = strdup(line);
-            if (parse_req_line(dup, req) < 0) {
-                return NULL;
-            }
+            gdup = dup;
             firstline = 0;
+            if (parse_req_line(dup, req) < 0) {
+                free(req);
+                req = NULL;
+                continue;
+            }
         } else if (strcmp(line, "\r\n") != 0) {
             // ToDo: parse header
             continue;

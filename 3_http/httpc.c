@@ -1,3 +1,14 @@
+/**
+ * @file httpc.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Http client api
+ *
+ * @version 0.1
+ * @date 15.01.2023
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "httpc.h"
 #include "common.h"
 #include <netdb.h>
@@ -9,7 +20,7 @@
 
 #define PROTOCOL "HTTP/1.1"
 
-static void send_request(FILE* sockfile, const char* method, const char* url)
+void send_request(FILE* sockfile, const char* method, const char* url)
 {
     char host[strlen(url) + 1];
     host_from_url(url, host);
@@ -17,7 +28,7 @@ static void send_request(FILE* sockfile, const char* method, const char* url)
     fprintf(sockfile, "%s %s %s\r\nHost: %s\r\nConnection: close\r\n\r\n", method, ressource, PROTOCOL, host);
 }
 
-static FILE* create_socket(const char* url, const char* port)
+FILE* create_socket(const char* url, const char* port)
 {
     char host[strlen(url) + 1];
     host_from_url(url, host);
@@ -28,31 +39,36 @@ static FILE* create_socket(const char* url, const char* port)
 
     int res = getaddrinfo(host, port, &hints, &ai);
     if (res != 0) {
+        free(ai);
         log_error("Httpc failed getaddrinfo failed");
         return NULL;
     }
 
     int sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (sockfd < 0) {
+        free(ai);
         log_error("Httpc socket failed");
         return NULL;
     }
 
     if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == -1) {
+        free(ai);
         log_error("Httpc connect failed");
         return NULL;
     }
 
     FILE* sockfile = fdopen(sockfd, "r+");
     if (sockfile == NULL) {
+        free(ai);
         log_error("Httpc open sockfile failed");
         return NULL;
     }
 
+    free(ai);
     return sockfile;
 }
 
-static int parse_res_line(char* line)
+int parse_res_line(char* line)
 {
 
     char* token = strtok(line, " ");
@@ -126,6 +142,11 @@ int httpc(const char* method, const char* url, const char* port, FILE* output)
             fprintf(output, "%s", line);
         }
     }
+
+    if(sockfile != NULL) {
+        fclose(sockfile);
+    }
+
     free(line);
     return 1;
 }

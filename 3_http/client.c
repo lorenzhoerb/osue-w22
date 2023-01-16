@@ -1,3 +1,14 @@
+/**
+ * @file client.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Http client
+ *
+ * @version 0.1
+ * @date 15.01.2023
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "common.h"
 #include "httpc.h"
 #include <getopt.h>
@@ -14,18 +25,29 @@ struct options {
     char* url;
 };
 
-struct options* g_opts;
+static struct options* g_opts;
 
-void clean_exit(int exit_status);
-FILE* open_out_file(const char* file);
+static void clean_exit(int exit_status);
+static FILE* open_out_file(const char* file);
 
+/**
+ * @brief Prints the usage of the program.
+ * 
+ */
 void usage(void)
 {
     (void)fprintf(stderr, "Usage: %s [-p PORT] [ -o FILE | -d DIR ] URL\n",
         prg_name);
 }
 
-struct options init_options(int argc, char** argv)
+/**
+ * @brief Initializes the options of the program.
+ * 
+ * @param argc argument counter
+ * @param argv argument vector
+ * @return struct options initialized options struct
+ */
+static struct options init_options(int argc, char** argv)
 {
     struct options opts;
     char opt;
@@ -107,7 +129,14 @@ struct options init_options(int argc, char** argv)
     return opts;
 }
 
-FILE* open_out_file(const char* file)
+/**
+ * @brief Opens the file @code{file} in writemode.
+ * Errors exits when output file couldn't be opened.
+ * 
+ * @param file file to open
+ * @return FILE* opened file
+ */
+static FILE* open_out_file(const char* file)
 {
     FILE* out = fopen(file, "w");
     if (out == NULL) {
@@ -117,7 +146,13 @@ FILE* open_out_file(const char* file)
     return out;
 }
 
-void clean_exit(int exit_status)
+/**
+ * @brief Exits the program with the given exit code and
+ * cleans up all claimed ressoureces.
+ * 
+ * @param exit_status exit status
+ */
+static void clean_exit(int exit_status)
 {
     if (g_opts != NULL) {
         if (g_opts->out != NULL) {
@@ -127,6 +162,13 @@ void clean_exit(int exit_status)
     exit(exit_status);
 }
 
+/**
+ * @brief Starting point of the program the http client program.
+ * 
+ * @param argc argument counter
+ * @param argv argument vector
+ * @return int exit code
+ */
 int main(int argc, char** argv)
 {
     prg_name = argv[0];
@@ -135,6 +177,10 @@ int main(int argc, char** argv)
     if (httpc("GET", opts.url, opts.port, opts.out) < 0) {
         log_error("HTTPC failed");
         clean_exit(EXIT_FAILURE);
+    }
+
+    if(opts.out != NULL) {
+        fclose(opts.out);
     }
 
     exit(EXIT_SUCCESS);

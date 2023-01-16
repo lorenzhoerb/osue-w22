@@ -1,3 +1,14 @@
+/**
+ * @file common.c
+ * @author Lorenz Hörburger 12024737
+ * @brief Common mothods for http client and http server
+ *
+ * @version 0.1
+ * @date 15.01.2023
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "common.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -5,11 +16,6 @@
 #include <string.h>
 #include <time.h>
 
-/**
- * @brief Saves to current date-time to date in rfc822 format
- *
- * @param date current date-time
- */
 void get_rfc822_date(char* date)
 {
     char outstr[200];
